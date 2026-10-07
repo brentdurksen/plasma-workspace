@@ -9,6 +9,7 @@
 #include "abstracttasksmodel.h"
 
 #include <ranges>
+#include <utility>
 
 #include <KApplicationTrader>
 #include <KConfigGroup>
@@ -217,6 +218,22 @@ QUrl windowUrlFromMetadata(const QString &appId, quint32 pid, const QString &xWi
             }
         }
     };
+
+    // On Wayland, appId is the strongest application identifier and can exactly
+    // name a PWA's desktop entry. Prefer that match over a generic resource name
+    // (e.g. a Chromium process name). However, if appId itself matches a service's
+    // StartupWMClass, it may be an XWayland WM_CLASS; in that case resourceName
+    // can provide the more specific PWA match below.
+    if (!appId.isEmpty()) {
+        KService::List appIdServices = KApplicationTrader::query([&appId](const KService::Ptr &service) {
+            return service->desktopEntryName().compare(appId, Qt::CaseInsensitive) == 0;
+        });
+        sortServicesByMenuId(appIdServices, appId);
+        if (!appIdServices.isEmpty()
+            && appIdServices.first()->property<QString>(QStringLiteral("StartupWMClass")).compare(appId, Qt::CaseInsensitive) != 0) {
+            services = std::move(appIdServices);
+        }
+    }
 
     if (!(appId.isEmpty() && xWindowsWMClassName.isEmpty())) {
         if (!appId.isEmpty()) {

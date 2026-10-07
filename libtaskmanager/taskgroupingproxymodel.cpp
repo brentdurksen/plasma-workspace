@@ -214,6 +214,33 @@ void TaskGroupingProxyModel::Private::sourceLayoutChanged()
 
 void TaskGroupingProxyModel::Private::sourceDataChanged(QModelIndex topLeft, QModelIndex bottomRight, const QList<int> &roles)
 {
+    // Empty role lists are also used by TasksModel to re-filter launchers in
+    // response to the group-parent dataChanged emitted by tryToGroup(). Treating
+    // those feedback notifications as identity changes would re-enter
+    // checkGrouping() before tryToGroup() has finished updating rowMap.
+    const bool groupingDataChanged = roles.contains(AbstractTasksModel::AppId) || roles.contains(AbstractTasksModel::LauncherUrlWithoutIcon)
+        || roles.contains(AbstractTasksModel::IsWindow);
+
+    if (groupingDataChanged) {
+        // Groups are formed from the source rows' app ids and launcher URLs. If
+        // one of those changes for a grouped task, split its old group first so
+        // checkGrouping() can form groups from the updated identities.
+        QSet<int> groupsToBreak;
+        for (int i = topLeft.row(); i <= bottomRight.row(); ++i) {
+            const QModelIndex &sourceIndex = q->sourceModel()->index(i, 0);
+            const QModelIndex proxyIndex = q->mapFromSource(sourceIndex);
+            if (proxyIndex.parent().isValid()) {
+                groupsToBreak.insert(proxyIndex.parent().row());
+            }
+        }
+
+        for (const int row : groupsToBreak) {
+            breakGroupFor(q->index(row, 0));
+        }
+
+        checkGrouping();
+    }
+
     for (int i = topLeft.row(); i <= bottomRight.row(); ++i) {
         const QModelIndex &sourceIndex = q->sourceModel()->index(i, 0);
         QModelIndex proxyIndex = q->mapFromSource(sourceIndex);

@@ -12,6 +12,7 @@ ecm_add_tests(
     tasktoolstest.cpp
     tasksmodeltest.cpp
     launchertasksmodeltest.cpp
+    taskgroupingproxymodeltest.cpp
     LINK_LIBRARIES taskmanager Qt::Test KF6::Service KF6::ConfigCore
 )
 

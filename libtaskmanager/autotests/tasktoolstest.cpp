@@ -183,6 +183,8 @@ void TaskToolsTest::testWindowUrlFromMetadata_data()
     QTest::addRow("brave") << QStringLiteral("Brave-browser") << QStringLiteral("brave-browser") << QUrl(u"applications:brave-browser.desktop"_s);
     QTest::addRow("brave_webapp") << QStringLiteral("Brave-browser") << QStringLiteral("crx_efmjfjelnicpmdcmfikempdhlmainjcb")
                                   << QUrl(u"applications:brave-efmjfjelnicpmdcmfikempdhlmainjcb-Default.desktop"_s);
+    QTest::addRow("native_wayland_webapp") << QStringLiteral("brave-efmjfjelnicpmdcmfikempdhlmainjcb-Default") << QStringLiteral("brave-browser")
+                                           << QUrl(u"applications:brave-efmjfjelnicpmdcmfikempdhlmainjcb-Default.desktop"_s);
 
     const QString dataDir = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
     QTest::addRow("kcm_kdeconnect") << dataDir + QLatin1String("/kservices6/kcm_kdeconnect") << QString()
